@@ -14,11 +14,9 @@ const KEY_DOWN = 40;
 const KEY_SHIFT = 16;
 const KEY_SPACE = 32;
 const GRAVITY_A = 0.6;
-const GRAVITY_HEAVY_A = GRAVITY_A * 2;
 const JUMP_A = -10;
 const JUMP_V = new Vector2(0, -4);
 
-const LARGE_JUMP_THRESHOLD = 120;
 
 // Global state
 let _renderer = null;
@@ -26,7 +24,6 @@ let _stage = null;
 let _player = null;
 let _jumpAccel = 0;
 let _jumpT = null;
-let _jumpTimeout = null;
 const _playerVector = new Vector2(0, 0);
 const _keyState = [];
 
@@ -48,11 +45,6 @@ function renderRect(fill, x, y, width, height) {
 }
 function handleKeyDownAction(keyCode) {
   if (keyCode === KEY_SPACE && _player.y === sizes.container[1] - sizes.player[1]) {
-    _isLargeJump = null
-    _jumpTimeout = setTimeout(() => {
-      _jumpTimeout = null;
-      _isLargeJump = true;
-    }, LARGE_JUMP_THRESHOLD)
     _jumpT = 1;
   }
 }
@@ -66,12 +58,6 @@ function handleKeyDown({ keyCode }) {
 }
 
 function handleKeyUp({ keyCode }) {
-  if (keyCode === KEY_SPACE) {
-    if (_jumpTimeout) {
-      _isLargeJump = false;
-      clearTimeout(_jumpTimeout);
-    }
-  }
   const pos = _keyState.indexOf(keyCode);
   if (pos >= 0) {
     // remove it
@@ -137,7 +123,7 @@ function doAnimate() {
   }
 
   if (_jumpT !== null) {
-    const newVelocity = new Vector2(0, JUMP_A).add(new Vector2(0, _jumpT * (_isLargeJump === false ? GRAVITY_HEAVY_A : GRAVITY_A )));
+    const newVelocity = new Vector2(0, _keyState.includes(KEY_SPACE) ? JUMP_A : 0).add(new Vector2(0, _jumpT * GRAVITY_A));
     const newPlayerPos = new Vector2(_player.x, _player.y).add(newVelocity);
 
     const MAX_Y = sizes.container[1] - sizes.player[1];
