@@ -4,8 +4,16 @@
   "description": "Game prototype",
   "main": "game.js",
   "scripts": {
+    "dev": "webpack-dev-server --host 0.0.0.0",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Lenny Sirivong <lenny@lenny-s.com>",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "pixi.js": "^4.5.4"
+  },
+  "devDependencies": {
+    "webpack": "^3.4.1",
+    "webpack-dev-server": "^2.6.1"
+  }
 }
