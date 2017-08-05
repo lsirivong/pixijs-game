@@ -13,10 +13,11 @@ const KEY_UP = 38;
 const KEY_DOWN = 40;
 const KEY_SHIFT = 16;
 const KEY_SPACE = 32;
-const GRAVITY_A = 0.6;
+const GRAVITY_A = 0.08;
 const JUMP_A = -10;
 const JUMP_V = new Vector2(0, -4);
 
+const MAX_PLAYER_Y = sizes.container[1] - sizes.player[1];
 
 // Global state
 let _renderer = null;
@@ -44,7 +45,8 @@ function renderRect(fill, x, y, width, height) {
   return rectangle;
 }
 function handleKeyDownAction(keyCode) {
-  if (keyCode === KEY_SPACE && _player.y === sizes.container[1] - sizes.player[1]) {
+  if (keyCode === KEY_SPACE && _player.y >= MAX_PLAYER_Y) {
+     _playerVector.add(new Vector2(0, JUMP_A));
     _jumpT = 1;
   }
 }
@@ -58,6 +60,9 @@ function handleKeyDown({ keyCode }) {
 }
 
 function handleKeyUp({ keyCode }) {
+  if (keyCode === KEY_SPACE) {
+    _playerVector.set(0, 0);
+  }
   const pos = _keyState.indexOf(keyCode);
   if (pos >= 0) {
     // remove it
@@ -123,17 +128,17 @@ function doAnimate() {
   }
 
   if (_jumpT !== null) {
-    const newVelocity = new Vector2(0, _keyState.includes(KEY_SPACE) ? JUMP_A : 0).add(new Vector2(0, _jumpT * GRAVITY_A));
-    const newPlayerPos = new Vector2(_player.x, _player.y).add(newVelocity);
+    _playerVector.add(new Vector2(0, _jumpT * GRAVITY_A));
+    const newPlayerPos = new Vector2(_player.x, _player.y).add(_playerVector);
 
-    const MAX_Y = sizes.container[1] - sizes.player[1];
     // keep in bounds;
     _player.x = _.clamp(newPlayerPos.x, 0, sizes.container[0] - sizes.player[0]);
-    _player.y = _.clamp(newPlayerPos.y, 0, MAX_Y);
+    _player.y = _.clamp(newPlayerPos.y, 0, MAX_PLAYER_Y);
 
     _jumpT++;
 
-    if (_player.y === MAX_Y) {
+    if (_player.y === MAX_PLAYER_Y) {
+      _playerVector.set(0, 0);
       _jumpT = null;
     }
   }
