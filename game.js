@@ -1,5 +1,6 @@
 const PIXI = require('pixi.js');
 const _ = require('lodash');
+const { Vector2 } = require('three');
 
 const options = {
   width: 256,
@@ -12,17 +13,22 @@ const KEY_UP = 38;
 const KEY_DOWN = 40;
 const KEY_SHIFT = 16;
 const KEY_SPACE = 32;
+const GRAVITY_A = 1.2;
+const JUMP_A = -15;
+const JUMP_V = new Vector2(0, -4);
 
 // Global state
 let _renderer = null;
 let _stage = null;
 let _player = null;
-let _jumpVector = 0;
+let _jumpAccel = 0;
+let _jumpT = null;
+const _playerVector = new Vector2(0, 0);
 const _keyState = [];
 
 function handleKeyDownAction(keyCode) {
-  if (keyCode === KEY_SPACE) {
-    _jumpVector = 50;
+  if (keyCode === KEY_SPACE && _jumpT === null) {
+    _jumpT = 1;
   }
 }
 
@@ -54,7 +60,8 @@ function init() {
   function initPlayer() {
     const rectangle = new PIXI.Graphics();
     rectangle.beginFill(0xbaddad);
-    rectangle.drawRect(0, options.height - 10, 10, 10);
+    rectangle.drawRect(0, 0, 10, 10);
+    rectangle.y = options.height - 10;
     rectangle.endFill();
 
     return rectangle;
@@ -97,14 +104,20 @@ function doAnimate() {
     _player.x = _.clamp(newX, 0, options.width - _player.width);
   }
 
-  if (_jumpVector > 0) {
-    _player.y -= _jumpVector;
-    _jumpVector = 0;
-  }
+  if (_jumpT !== null) {
+    const newVelocity = new Vector2(0, JUMP_A).add(new Vector2(0, _jumpT * GRAVITY_A));
+    const newPlayerPos = new Vector2(_player.x, _player.y).add(newVelocity);
 
-  const playerHeight = options.height - _player.height - _player.y;
-  if (playerHeight > 0) {
-    _player.y *= 0.9;
+    const MAX_Y = options.height - _player.height;
+    // keep in bounds;
+    _player.x = _.clamp(newPlayerPos.x, 0, options.width - _player.width);
+    _player.y = _.clamp(newPlayerPos.y, 0, MAX_Y);
+
+    _jumpT++;
+
+    if (_player.y === MAX_Y) {
+      _jumpT = null;
+    }
   }
 }
 
