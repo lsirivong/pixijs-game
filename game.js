@@ -14,6 +14,8 @@ const KEY_DOWN = 40;
 const KEY_SHIFT = 16;
 const KEY_SPACE = 32;
 const GRAVITY_A = 0.08;
+const WALK_SPEED = 3;
+const RUN_SPEED = 6;
 const JUMP_A = -10;
 const JUMP_V = new Vector2(0, -4);
 
@@ -113,7 +115,7 @@ function init() {
 
 function doAnimate() {
   let playerXVector = 0;
-  let magnitude = _keyState.includes(KEY_SHIFT) ? 5 : 2;
+  let magnitude = _keyState.includes(KEY_SHIFT) ? RUN_SPEED : WALK_SPEED;
   if (_keyState.includes(KEY_RIGHT)) {
     playerXVector += magnitude;
   }
