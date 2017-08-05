@@ -5,70 +5,68 @@ const options = {
   height: 256,
 }
 
-const game = {
-  renderer: null,
-  stage: null,
-  player: null,
-  playerXVector: null,
+let renderer = null;
+let stage = null;
+let player = null;
+let playerXVector = null;
 
-  initRenderer: function initRenderer() {
-    const renderer = PIXI.autoDetectRenderer(options.width, options.height, {
-    });
-    renderer.view.classList.add('game-container');
-    document.body.appendChild(renderer.view);
-    return renderer;
-  },
+function initRenderer() {
+  const renderer = PIXI.autoDetectRenderer(options.width, options.height, {
+  });
+  renderer.view.classList.add('game-container');
+  document.body.appendChild(renderer.view);
+  return renderer;
+}
 
-  initPlayer: function initPlayer() {
-    const rectangle = new PIXI.Graphics();
-    rectangle.beginFill(0x66ccff);
-    rectangle.drawRect(0, 0, 10, 10);
-    rectangle.endFill();
+function initPlayer() {
+  const rectangle = new PIXI.Graphics();
+  rectangle.beginFill(0xbaddad);
+  rectangle.drawRect(0, 0, 10, 10);
+  rectangle.endFill();
 
-    return rectangle;
-  },
+  return rectangle;
+}
 
-  initStage: function initStage() {
-    const stage = new PIXI.Container();
+function initStage() {
+  const stage = new PIXI.Container();
 
-    stage.addChild(this.player);
+  stage.addChild(player);
 
-    return stage;
-  },
+  return stage;
+}
 
-  init: function init() {
-    this.renderer = this.initRenderer();
-    this.player = this.initPlayer();
-    this.stage = this.initStage();
+function init() {
+  renderer = initRenderer();
+  player = initPlayer();
+  stage = initStage();
 
-    this.playerXVector = 1;
-  },
+  playerXVector = 1;
+}
 
-  doAnimate: function doAnimate() {
-    if (this.playerXVector) {
-      // Rudimentary wall hit detection
-      if (this.player.x + this.player.width >= options.width || this.player.x < 0) {
-        this.playerXVector *= -1;
-      }
-      this.player.x += this.playerXVector;
+function doAnimate() {
+  if (playerXVector) {
+    // Rudimentary wall hit detection
+    if (player.x + player.width >= options.width || player.x < 0) {
+      playerXVector *= -1;
     }
-  },
-
-  gameLoop: function gameLoop() {
-    if (!this.renderer) {
-      debugger;
-    }
-    this.renderer.render(this.stage);
-
-    this.doAnimate();
-
-    requestAnimationFrame(gameLoop.bind(this));
-  },
-
-  run: function run() {
-    this.init();
-    this.gameLoop();
+    player.x += playerXVector;
   }
 }
 
-game.run();
+function gameLoop() {
+  if (!renderer) {
+    debugger;
+  }
+  renderer.render(stage);
+
+  doAnimate();
+
+  requestAnimationFrame(gameLoop);
+}
+
+function run() {
+  init();
+  gameLoop();
+}
+
+run();
