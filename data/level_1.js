@@ -11,6 +11,8 @@ const platforms = [
   [ 2, 28, 8 ],
   [ 22, 28, 8 ],
   [ 0, 31, 32 ],
+  [ 0, 1, 1, 30 ],
+  [ 31, 1, 1, 30 ],
 ];
 
 module.exports = platforms;

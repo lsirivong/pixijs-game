@@ -32,7 +32,12 @@ const _playerVector = new Vector2(0, 0);
 const _keyState = [];
 const _hitData = [];
 
-const platformToRect = ([ x, y, width ]) => [ x * sizes.cell[0], y * sizes.cell[1], width * sizes.cell[0], sizes.cell[1] ];
+const platformToRect = ([ x, y, width, height = 1 ]) => [
+  x * sizes.cell[0],
+  y * sizes.cell[1],
+  width * sizes.cell[0],
+  height * sizes.cell[1]
+];
 
 /**
  * returns a PIXI.Graphics object
@@ -77,7 +82,7 @@ function collideWithHitData(p) {
   const playerTop = p.y;
   const playerBottom = playerTop + sizes.player[1];
   const playerLeft = p.x;
-  const playerRight = playerLeft + sizes.player[1];
+  const playerRight = playerLeft + sizes.player[0];
   const hitBoxes = [
     [playerLeft, playerTop], // NW
     [playerRight, playerTop], // NE
@@ -101,6 +106,8 @@ function collideWithHitData(p) {
     return;
   }
 
+  const isVertical = Math.abs(_playerVector.y) >= Math.abs(_playerVector.x); 
+  console.log('HAVE HITS')
   hits.forEach(([i, j]) => {
     const data = _hitData[i][j];
     const left = i * sizes.cell[0];
@@ -108,21 +115,41 @@ function collideWithHitData(p) {
     const right = left + sizes.cell[0];
     const bottom = top + sizes.cell[1];
     const rangesOverlap = (a, b, x, y) => (_.inRange(a, x, y) || _.inRange(b, x, y));
-    const playerLeft = p.x;
-    const playerRight = p.x + sizes.player[0];
     if (data === 'p') {
-      if (
-        _.inRange(p.y, top, bottom) && rangesOverlap(p.x, playerRight, left, right)
-      ) {
-        p.y = bottom;
-        // send downward for "bounceback" feel
-        _playerVector.setY(4);
-        return;
-      } else if (_.inRange(playerBottom, top, bottom) && rangesOverlap(p.x, playerRight, left, right)) {
-        _playerVector.setY(0);
-        _jumpT = null;
-        p.y = top - sizes.player[1];
-        return;
+      if (isVertical) {
+        // Vertical collision
+        //
+        if (
+          // top is in rect
+          _.inRange(p.y, top, bottom)// && rangesOverlap(p.x, playerRight, left, right)
+        ) {
+          p.y = bottom + 1;
+          // send downward for "bounceback" feel
+          console.log('TOP')
+          _playerVector.setY(4);
+          // return;
+        } else if (
+          _.inRange(playerBottom, top, bottom)// && rangesOverlap(p.x, playerRight, left, right)
+        ) {
+          // bottom is in rect
+          console.log('BOTTOM')
+          _playerVector.setY(0);
+          _jumpT = null;
+          p.y = top - sizes.player[1];
+          // return;
+        }
+      } else {
+        console.log(p.x, p.y, {i, j, left, top, right, bottom})
+        // Horizontal collision
+        //
+        if (
+          _.inRange(p.x, left, right) && rangesOverlap(p.y, p.y + sizes.player[1] - 1, top, bottom)
+        ) {
+          // left is colliding
+          console.log('LEFT COLLIDE');
+          p.x = right;
+          _playerVector.setX(0);
+        }
       }
     }
   })
@@ -138,7 +165,13 @@ function init() {
   }
 
   function initPlayer() {
-    return renderRect(0xbaddad, 0, sizes.container[1] - sizes.cell[1] - sizes.player[1], sizes.player[0], sizes.player[1]);
+    return renderRect(
+      0xbaddad,
+      sizes.cell[1],
+      sizes.container[1] - sizes.cell[1] - sizes.player[1],
+      sizes.player[0],
+      sizes.player[1]
+    );
   }
 
   function initHitData() {
@@ -155,9 +188,11 @@ function init() {
     initHitData();
 
     // add platforms to hit data;
-    platforms.forEach(([x, y, width]) => {
+    platforms.forEach(([x, y, width, height = 1]) => {
       for (let i = 0; i < width; i++) {
-        _hitData[x + i][y] = 'p';
+        for (let j = 0; j < height; j++) {
+          _hitData[x + i][y + j] = 'p';
+        }
       }
     });
 
@@ -186,7 +221,7 @@ function init() {
   _renderer = initRenderer();
   _player = initPlayer();
   _platforms = initPlatforms(platforms);
-  _stage = initStage([ _player, ..._platforms ]);
+  _stage = initStage([ ..._platforms, _player ]);
 }
 
 function doAnimate() {
