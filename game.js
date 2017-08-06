@@ -129,6 +129,8 @@ function collideWithHitData(p) {
         _.inRange(p.y, top, bottom) && rangesOverlap(p.x, playerRight, left, right)
       ) {
         p.y = bottom;
+        // send downward for "bounceback" feel
+        _playerVector.setY(4);
         return;
       } else if (_.inRange(playerBottom, top, bottom) && rangesOverlap(p.x, playerRight, left, right)) {
         _playerVector.setY(0);
@@ -190,52 +192,55 @@ function init() {
 }
 
 function doAnimate() {
-  let playerXVector = 0;
   let magnitude = _keyState.includes(KEY_SHIFT) ? RUN_SPEED : WALK_SPEED;
   let moved = false;
   if (_keyState.includes(KEY_RIGHT)) {
-    playerXVector += magnitude;
+    _playerVector.add(new Vector2(magnitude, 0));
   }
 
   if (_keyState.includes(KEY_LEFT)) {
-    playerXVector -= magnitude;
-  }
-
-  if (playerXVector !== 0) {
-    const newX = _player.x + playerXVector;
-    _player.x = _.clamp(newX, 0, sizes.container[0] - sizes.player[0]);
-    moved = true;
+    _playerVector.add(new Vector2(-magnitude, 0));
   }
 
   if (_jumpT !== null) {
     _playerVector.add(new Vector2(0, _jumpT * GRAVITY_A));
 
-    // clamp velocity
-    const MAX_PLAYER_VELOCITY_Y = 8;
-    _playerVector.y = _.clamp(_playerVector.y, -MAX_PLAYER_VELOCITY_Y, MAX_PLAYER_VELOCITY_Y);
-
-    const newPlayerPos = new Vector2(_player.x, _player.y).add(_playerVector);
-
-    // keep in bounds;
-    _player.x = _.clamp(newPlayerPos.x, 0, sizes.container[0] - sizes.player[0]);
-    _player.y = _.clamp(newPlayerPos.y, 0, MAX_PLAYER_Y);
-
     _jumpT++;
-    moved = true;
   }
 
+  if (_playerVector.x !== 0) {
+    // add some floor friction
+    _playerVector.add(new Vector2(-1 * (_playerVector.x * 0.5), 0));
+
+    if (Math.abs(_playerVector.x) < 0.5) {
+      _playerVector.x = 0;
+    }
+  }
+
+  // clamp velocity
+  const MAX_PLAYER_VELOCITY_Y = 8;
+  const MAX_PLAYER_VELOCITY_X = magnitude;
+
+  _playerVector.x = _.clamp(_playerVector.x, -MAX_PLAYER_VELOCITY_X, MAX_PLAYER_VELOCITY_X);
+  _playerVector.y = _.clamp(_playerVector.y, -MAX_PLAYER_VELOCITY_Y, MAX_PLAYER_VELOCITY_Y);
+
+  const newPlayerPos = new Vector2(_player.x, _player.y).add(_playerVector);
+
+  // keep in bounds;
+  _player.x = _.clamp(newPlayerPos.x, 0, sizes.container[0] - sizes.player[0]);
+  _player.y = _.clamp(newPlayerPos.y, 0, MAX_PLAYER_Y);
+
   if (_player.y === MAX_PLAYER_Y) {
-    _playerVector.set(0, 0);
+    _playerVector.setY(0);
   }
 
   if (_playerVector.y === 0) {
     _jumpT = null;
   }
 
-  if (moved) {
+  if (_playerVector.length() > 0) {
     // collide with platforms
     collideWithHitData(_player);
-
   }
 }
 
