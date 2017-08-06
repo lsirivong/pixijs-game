@@ -191,7 +191,6 @@ function init() {
 
 function doAnimate() {
   let magnitude = _keyState.includes(KEY_CODES.SHIFT) ? RUN_SPEED : WALK_SPEED;
-  let moved = false;
   const stateRightIndex = _keyState.indexOf(KEY_CODES.RIGHT);
   const stateLeftIndex = _keyState.indexOf(KEY_CODES.LEFT);
   if (stateRightIndex > stateLeftIndex) {
