@@ -34,7 +34,7 @@ const _keyState = [];
 //
 const platforms = [
   [ 2, 28, 8 ],
-  [ 14, 18, 4 ]
+  [ 14, 20, 4 ]
 ];
 
 window.hitData = [];
@@ -88,31 +88,55 @@ function handleKeyUp({ keyCode }) {
 }
 
 function collideWithHitData(p) {
-  hitData.forEach((arr, i) => {
-    arr.forEach((data, j) => {
-      if (data === 'p') {
-        const left = i * 8;
-        const top = j * 8;
-        const right = left + 8;
-        const bottom = top + 8;
+  const playerTop = p.y;
+  const playerBottom = playerTop + sizes.player[1];
+  const playerLeft = p.x;
+  const playerRight = playerLeft + sizes.player[1];
+  const hitBoxes = [
+    [playerLeft, playerTop], // NW
+    [playerRight, playerTop], // NE
+    [playerRight, playerBottom], // SE
+    [playerLeft, playerBottom], // SW
+  ].map(coord =>
+    coord.map(val =>
+      _.clamp(
+        Math.floor(val / 8), 0, 31
+      )
+    )
+  );
+  const uniqHitBoxes = _.uniqWith(hitBoxes, _.isEqual);
 
-        const rangesOverlap = (a, b, x, y) => (_.inRange(a, x, y) || _.inRange(b, x, y));
+  const hits = uniqHitBoxes.filter((([i, j]) => hitData[i][j] !== null));
 
-        const playerBottom = p.y + sizes.player[1];
-        const playerLeft = p.x;
-        const playerRight = p.x + sizes.player[0];
-        if (
-          _.inRange(p.y, top, bottom) && rangesOverlap(p.x, playerRight, left, right)
-        ) {
-          console.log('HIT TOP', i, j, p.y, bottom);
-          p.y = bottom;
-        } else if (_.inRange(playerBottom, top, bottom) && rangesOverlap(p.x, playerRight, left, right)) {
-          console.log('HIT BOTTOM', i, j, p.y, bottom);
-          _playerVector.setY(0);
-          p.y = top - sizes.player[1];;
-        }
+  if (hits.length === 0) {
+    if (_jumpT === null) {
+      _jumpT = 1;
+    }
+    return;
+  }
+
+  hits.forEach(([i, j]) => {
+    const data = hitData[i][j];
+    const left = i * 8;
+    const top = j * 8;
+    const right = left + 8;
+    const bottom = top + 8;
+    const rangesOverlap = (a, b, x, y) => (_.inRange(a, x, y) || _.inRange(b, x, y));
+    const playerLeft = p.x;
+    const playerRight = p.x + sizes.player[0];
+    if (data === 'p') {
+      if (
+        _.inRange(p.y, top, bottom) && rangesOverlap(p.x, playerRight, left, right)
+      ) {
+        p.y = bottom;
+        return;
+      } else if (_.inRange(playerBottom, top, bottom) && rangesOverlap(p.x, playerRight, left, right)) {
+        _playerVector.setY(0);
+        _jumpT = null;
+        p.y = top - sizes.player[1];
+        return;
       }
-    })
+    }
   })
 }
 
@@ -168,6 +192,7 @@ function init() {
 function doAnimate() {
   let playerXVector = 0;
   let magnitude = _keyState.includes(KEY_SHIFT) ? RUN_SPEED : WALK_SPEED;
+  let moved = false;
   if (_keyState.includes(KEY_RIGHT)) {
     playerXVector += magnitude;
   }
@@ -179,6 +204,7 @@ function doAnimate() {
   if (playerXVector !== 0) {
     const newX = _player.x + playerXVector;
     _player.x = _.clamp(newX, 0, sizes.container[0] - sizes.player[0]);
+    moved = true;
   }
 
   if (_jumpT !== null) {
@@ -194,18 +220,22 @@ function doAnimate() {
     _player.x = _.clamp(newPlayerPos.x, 0, sizes.container[0] - sizes.player[0]);
     _player.y = _.clamp(newPlayerPos.y, 0, MAX_PLAYER_Y);
 
+    _jumpT++;
+    moved = true;
+  }
+
+  if (_player.y === MAX_PLAYER_Y) {
+    _playerVector.set(0, 0);
+  }
+
+  if (_playerVector.y === 0) {
+    _jumpT = null;
+  }
+
+  if (moved) {
     // collide with platforms
     collideWithHitData(_player);
 
-    _jumpT++;
-
-    if (_player.y === MAX_PLAYER_Y) {
-      _playerVector.set(0, 0);
-    }
-
-    if (_playerVector.y === 0) {
-      _jumpT = null;
-    }
   }
 }
 
