@@ -194,11 +194,11 @@ function init() {
 function doAnimate() {
   let magnitude = _keyState.includes(KEY_SHIFT) ? RUN_SPEED : WALK_SPEED;
   let moved = false;
-  if (_keyState.includes(KEY_RIGHT)) {
+  const stateRightIndex = _keyState.indexOf(KEY_RIGHT);
+  const stateLeftIndex = _keyState.indexOf(KEY_LEFT);
+  if (stateRightIndex > stateLeftIndex) {
     _playerVector.add(new Vector2(magnitude, 0));
-  }
-
-  if (_keyState.includes(KEY_LEFT)) {
+  } else if (stateLeftIndex > stateRightIndex) {
     _playerVector.add(new Vector2(-magnitude, 0));
   }
 
