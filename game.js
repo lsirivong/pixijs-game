@@ -1,22 +1,23 @@
 const PIXI = require('pixi.js');
 const _ = require('lodash');
 const { Vector2 } = require('three');
+const platforms = require('./data/level_1.js');
+const KEY_CODES = require('./constants/key_codes.js');
 
 const sizes = {
-  container: [256, 256],
-  player: [8, 8]
+  container: [1024, 1024],
+  grid: [32, 32],
 }
+sizes.cell = [
+  sizes.container[0] / sizes.grid[0],
+  sizes.container[1] / sizes.grid[1],
+];
+sizes.player = [].concat(sizes.cell);
 
-const KEY_LEFT = 37;
-const KEY_RIGHT = 39;
-const KEY_UP = 38;
-const KEY_DOWN = 40;
-const KEY_SHIFT = 16;
-const KEY_SPACE = 32;
-const GRAVITY_A = 0.08;
-const WALK_SPEED = 3;
-const RUN_SPEED = 6;
-const JUMP_A = -10;
+const GRAVITY_A = 0.14;
+const WALK_SPEED = 8;
+const RUN_SPEED = 12;
+const JUMP_A = -26;
 const JUMP_V = new Vector2(0, -4);
 
 const MAX_PLAYER_Y = sizes.container[1] - sizes.player[1];
@@ -29,33 +30,9 @@ let _jumpAccel = 0;
 let _jumpT = null;
 const _playerVector = new Vector2(0, 0);
 const _keyState = [];
+const _hitData = [];
 
-// divide stage into 32 x 32 grid
-//
-const platforms = [
-  [ 0, 0, 32 ],
-  [ 2, 2, 28 ],
-  [ 1, 5, 3 ],
-  [ 28, 5, 3 ],
-  [ 4, 12, 4 ],
-  [ 24, 12, 4 ],
-  [ 14, 20, 4 ],
-  [ 2, 28, 8 ],
-  [ 22, 28, 8 ],
-  [ 0, 31, 32 ],
-];
-
-hitData = [];
-
-for (let i = 0; i < 32; i++) {
-  const arr = [];
-  for (let j = 0; j < 32; j++) {
-    arr.push(null);
-  }
-  hitData.push(arr);
-}
-
-const platformToRect = ([ x, y, width ]) => [ x * 8, y * 8, width * 8, 8 ];
+const platformToRect = ([ x, y, width ]) => [ x * sizes.cell[0], y * sizes.cell[1], width * sizes.cell[0], sizes.cell[1] ];
 
 /**
  * returns a PIXI.Graphics object
@@ -69,8 +46,9 @@ function renderRect(fill, x, y, width, height) {
   rectangle.endFill();
   return rectangle;
 }
+
 function handleKeyDownAction(keyCode) {
-  if (keyCode === KEY_SPACE && _playerVector.y === 0) {
+  if (keyCode === KEY_CODES.SPACE && _playerVector.y === 0) {
      _playerVector.add(new Vector2(0, JUMP_A));
     _jumpT = 1;
   }
@@ -85,7 +63,7 @@ function handleKeyDown({ keyCode }) {
 }
 
 function handleKeyUp({ keyCode }) {
-  if (keyCode === KEY_SPACE) {
+  if (keyCode === KEY_CODES.SPACE) {
     _playerVector.set(0, 0);
   }
   const pos = _keyState.indexOf(keyCode);
@@ -108,13 +86,13 @@ function collideWithHitData(p) {
   ].map(coord =>
     coord.map(val =>
       _.clamp(
-        Math.floor(val / 8), 0, 31
+        Math.floor(val / sizes.cell[0]), 0, sizes.grid[0] - 1
       )
     )
   );
   const uniqHitBoxes = _.uniqWith(hitBoxes, _.isEqual);
 
-  const hits = uniqHitBoxes.filter((([i, j]) => hitData[i][j] !== null));
+  const hits = uniqHitBoxes.filter((([i, j]) => _hitData[i][j] !== null));
 
   if (hits.length === 0) {
     if (_jumpT === null) {
@@ -124,11 +102,11 @@ function collideWithHitData(p) {
   }
 
   hits.forEach(([i, j]) => {
-    const data = hitData[i][j];
-    const left = i * 8;
-    const top = j * 8;
-    const right = left + 8;
-    const bottom = top + 8;
+    const data = _hitData[i][j];
+    const left = i * sizes.cell[0];
+    const top = j * sizes.cell[1];
+    const right = left + sizes.cell[0];
+    const bottom = top + sizes.cell[1];
     const rangesOverlap = (a, b, x, y) => (_.inRange(a, x, y) || _.inRange(b, x, y));
     const playerLeft = p.x;
     const playerRight = p.x + sizes.player[0];
@@ -160,14 +138,26 @@ function init() {
   }
 
   function initPlayer() {
-    return renderRect(0xbaddad, 0, sizes.container[1] - 8 - sizes.player[1], sizes.player[0], sizes.player[1]);
+    return renderRect(0xbaddad, 0, sizes.container[1] - sizes.cell[1] - sizes.player[1], sizes.player[0], sizes.player[1]);
+  }
+
+  function initHitData() {
+    for (let i = 0; i < sizes.grid[0]; i++) {
+      const arr = [];
+      for (let j = 0; j < sizes.grid[1]; j++) {
+        arr.push(null);
+      }
+      _hitData.push(arr);
+    }
   }
 
   function initPlatforms(platforms = []) {
+    initHitData();
+
     // add platforms to hit data;
     platforms.forEach(([x, y, width]) => {
       for (let i = 0; i < width; i++) {
-        hitData[x + i][y] = 'p';
+        _hitData[x + i][y] = 'p';
       }
     });
 
@@ -200,10 +190,10 @@ function init() {
 }
 
 function doAnimate() {
-  let magnitude = _keyState.includes(KEY_SHIFT) ? RUN_SPEED : WALK_SPEED;
+  let magnitude = _keyState.includes(KEY_CODES.SHIFT) ? RUN_SPEED : WALK_SPEED;
   let moved = false;
-  const stateRightIndex = _keyState.indexOf(KEY_RIGHT);
-  const stateLeftIndex = _keyState.indexOf(KEY_LEFT);
+  const stateRightIndex = _keyState.indexOf(KEY_CODES.RIGHT);
+  const stateLeftIndex = _keyState.indexOf(KEY_CODES.LEFT);
   if (stateRightIndex > stateLeftIndex) {
     _playerVector.add(new Vector2(magnitude, 0));
   } else if (stateLeftIndex > stateRightIndex) {
@@ -226,7 +216,7 @@ function doAnimate() {
   }
 
   // clamp velocity
-  const MAX_PLAYER_VELOCITY_Y = 8;
+  const MAX_PLAYER_VELOCITY_Y = sizes.cell[1];
   const MAX_PLAYER_VELOCITY_X = magnitude;
 
   _playerVector.x = _.clamp(_playerVector.x, -MAX_PLAYER_VELOCITY_X, MAX_PLAYER_VELOCITY_X);
