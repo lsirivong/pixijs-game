@@ -4,7 +4,7 @@ const { Vector2 } = require('three');
 
 const sizes = {
   container: [256, 256],
-  player: [16, 16]
+  player: [8, 8]
 }
 
 const KEY_LEFT = 37;
@@ -30,9 +30,24 @@ let _jumpT = null;
 const _playerVector = new Vector2(0, 0);
 const _keyState = [];
 
+// divide stage into 32 x 32 grid
+//
 const platforms = [
-  [ 20, 200, 80, 10 ]
+  [ 2, 28, 8 ],
+  [ 14, 18, 4 ]
 ];
+
+window.hitData = [];
+
+for (let i = 0; i < 32; i++) {
+  const arr = [];
+  for (let j = 0; j < 32; j++) {
+    arr.push(null);
+  }
+  hitData.push(arr);
+}
+
+const platformToRect = ([ x, y, width ]) => [ x * 8, y * 8, width * 8, 8 ];
 
 /**
  * returns a PIXI.Graphics object
@@ -47,7 +62,7 @@ function renderRect(fill, x, y, width, height) {
   return rectangle;
 }
 function handleKeyDownAction(keyCode) {
-  if (keyCode === KEY_SPACE && _player.y >= MAX_PLAYER_Y) {
+  if (keyCode === KEY_SPACE && _playerVector.y === 0) {
      _playerVector.add(new Vector2(0, JUMP_A));
     _jumpT = 1;
   }
@@ -72,6 +87,35 @@ function handleKeyUp({ keyCode }) {
   }
 }
 
+function collideWithHitData(p) {
+  hitData.forEach((arr, i) => {
+    arr.forEach((data, j) => {
+      if (data === 'p') {
+        const left = i * 8;
+        const top = j * 8;
+        const right = left + 8;
+        const bottom = top + 8;
+
+        const rangesOverlap = (a, b, x, y) => (_.inRange(a, x, y) || _.inRange(b, x, y));
+
+        const playerBottom = p.y + sizes.player[1];
+        const playerLeft = p.x;
+        const playerRight = p.x + sizes.player[0];
+        if (
+          _.inRange(p.y, top, bottom) && rangesOverlap(p.x, playerRight, left, right)
+        ) {
+          console.log('HIT TOP', i, j, p.y, bottom);
+          p.y = bottom;
+        } else if (_.inRange(playerBottom, top, bottom) && rangesOverlap(p.x, playerRight, left, right)) {
+          console.log('HIT BOTTOM', i, j, p.y, bottom);
+          _playerVector.setY(0);
+          p.y = top - sizes.player[1];;
+        }
+      }
+    })
+  })
+}
+
 function init() {
   function initRenderer() {
     const renderer = PIXI.autoDetectRenderer(sizes.container[0], sizes.container[0], {
@@ -86,8 +130,16 @@ function init() {
   }
 
   function initPlatforms(platforms = []) {
+    // add platforms to hit data;
+    platforms.forEach(([x, y, width]) => {
+      for (let i = 0; i < width; i++) {
+        hitData[x + i][y] = 'p';
+      }
+    });
+
+    // create render graphics
     return platforms.map(p => (
-      renderRect.apply(null, [0xd7c12d, ...p])
+      renderRect.apply(null, [0xd7c12d, ...platformToRect(p)])
     ));
   }
 
@@ -131,16 +183,27 @@ function doAnimate() {
 
   if (_jumpT !== null) {
     _playerVector.add(new Vector2(0, _jumpT * GRAVITY_A));
+
+    // clamp velocity
+    const MAX_PLAYER_VELOCITY_Y = 8;
+    _playerVector.y = _.clamp(_playerVector.y, -MAX_PLAYER_VELOCITY_Y, MAX_PLAYER_VELOCITY_Y);
+
     const newPlayerPos = new Vector2(_player.x, _player.y).add(_playerVector);
 
     // keep in bounds;
     _player.x = _.clamp(newPlayerPos.x, 0, sizes.container[0] - sizes.player[0]);
     _player.y = _.clamp(newPlayerPos.y, 0, MAX_PLAYER_Y);
 
+    // collide with platforms
+    collideWithHitData(_player);
+
     _jumpT++;
 
     if (_player.y === MAX_PLAYER_Y) {
       _playerVector.set(0, 0);
+    }
+
+    if (_playerVector.y === 0) {
       _jumpT = null;
     }
   }
