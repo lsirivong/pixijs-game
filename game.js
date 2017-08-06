@@ -33,17 +33,19 @@ const _keyState = [];
 // divide stage into 32 x 32 grid
 //
 const platforms = [
-  [ 2, 28, 8 ],
-  [ 22, 28, 8 ],
-  [ 14, 20, 4 ],
+  [ 0, 0, 32 ],
+  [ 2, 2, 28 ],
+  [ 1, 5, 3 ],
+  [ 28, 5, 3 ],
   [ 4, 12, 4 ],
   [ 24, 12, 4 ],
-  [ 0, 4, 4 ],
-  [ 28, 4, 4 ],
-  [ 2, 1, 28 ],
+  [ 14, 20, 4 ],
+  [ 2, 28, 8 ],
+  [ 22, 28, 8 ],
+  [ 0, 31, 32 ],
 ];
 
-window.hitData = [];
+hitData = [];
 
 for (let i = 0; i < 32; i++) {
   const arr = [];
@@ -158,7 +160,7 @@ function init() {
   }
 
   function initPlayer() {
-    return renderRect(0xbaddad, 0, sizes.container[1] - sizes.player[1], sizes.player[0], sizes.player[1]);
+    return renderRect(0xbaddad, 0, sizes.container[1] - 8 - sizes.player[1], sizes.player[0], sizes.player[1]);
   }
 
   function initPlatforms(platforms = []) {
