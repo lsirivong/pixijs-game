@@ -3,6 +3,7 @@ const _ = require('lodash');
 const { Vector2 } = require('three');
 const platforms = require('./data/level_1.js');
 const KEY_CODES = require('./constants/key_codes.js');
+const platformToHitData = require('./utils/platformToHitData');
 
 const sizes = {
   container: [1024, 1024],
@@ -30,7 +31,12 @@ let _jumpAccel = 0;
 let _jumpT = null;
 const _playerVector = new Vector2(0, 0);
 const _keyState = [];
-const _hitData = [];
+const _hitData = {
+  ceilings: [],
+  floors: [],
+  rightWalls: [],
+  leftWalls: [],
+};
 
 const platformToRect = ([ x, y, width, height = 1 ]) => [
   x * sizes.cell[0],
