@@ -4,16 +4,7 @@ const { Vector2 } = require('three');
 const platforms = require('./data/level_1.js');
 const KEY_CODES = require('./constants/key_codes.js');
 const platformToHitData = require('./utils/platformToHitData');
-
-const sizes = {
-  container: [1024, 1024],
-  grid: [32, 32],
-}
-sizes.cell = [
-  sizes.container[0] / sizes.grid[0],
-  sizes.container[1] / sizes.grid[1],
-];
-sizes.player = [].concat(sizes.cell);
+const sizes = require('./constants/sizes.js');
 
 const GRAVITY_A = 0.14;
 const WALK_SPEED = 8;
