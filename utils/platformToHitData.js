@@ -7,12 +7,12 @@ const platformToHitData = (platforms = []) => {
 
     const widthPx = width * cellWidth;
     const heightPx = height * cellHeight;
-    const halfCellPx = heightPx / 2;
+    const halfCellPx = cellHeight / 2;
     const leftPx = left * cellWidth;
     const topPx = top * cellHeight;
 
     acc.ceilings.push([
-      leftPx, topPx + halfCellPx, widthPx, halfCellPx
+      leftPx, topPx + heightPx - halfCellPx, widthPx, halfCellPx
     ]);
     acc.floors.push([
       leftPx, topPx, widthPx, halfCellPx
