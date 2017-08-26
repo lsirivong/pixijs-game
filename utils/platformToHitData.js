@@ -1,5 +1,9 @@
 const sizes = require('../constants/sizes.js');
 
+/**
+ * Generates rects for the ceilings, floors, and walls
+ * of an array of rect data
+ */
 const platformToHitData = (platforms = []) => {
   return platforms.reduce((acc, platform) => {
     const [ left, top, width, height = 1 ] = platform;

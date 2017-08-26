@@ -4,7 +4,7 @@
   "description": "Game prototype",
   "main": "game.js",
   "scripts": {
-    "dev": "webpack-dev-server --host 0.0.0.0",
+    "start": "webpack-dev-server --host 0.0.0.0",
     "test": "jest --watch --color"
   },
   "author": "Lenny Sirivong <lenny@lenny-s.com>",
