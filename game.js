@@ -266,13 +266,13 @@ function collideWithHitData(player) {
   // console.log("B4 FLOORS", playerRect, state.hitData.floors)
   state.hitData.floors.forEach(floor => {
     // console.log("FLOOR", floor)
-    if (rectsCollide(playerRect, floor, info)) {
+    if (rectsCollide(playerRect, floor, info) && info.yCollide) {
       // This is wrong because will catch initiated jumps
       hitFloor = true;
       // TODO: dispatch action
       // state.playerVector.setY(0);
       if (state.jumpT) {
-        console.log('FALLING FLOOR COLLIDE', playerRect, floor);
+        console.log('FALLING FLOOR COLLIDE', playerRect, floor, info);
         // TODO dispatch action
         // console.log('RESET JUMP', state.jumpT)
         state.jumpT = null;
@@ -284,9 +284,9 @@ function collideWithHitData(player) {
   // console.log("AFTER FLOORS")
 
   state.hitData.westwardWalls.forEach(westwardWall => {
-    if (rectsCollide(playerRect, westwardWall, info) && info.xCollide) {
+    if (rectsCollide(playerRect, westwardWall, info) && info.xCollide && info.yCollide) {
       hitWestwardWall = true;
-      console.log('WESTARD WALL COLLIDE', playerRect, westwardWall);
+      console.log('WESTARD WALL COLLIDE', playerRect, westwardWall, info);
       // TODO: dispatch action
       state.playerVector.setX(0);
       playerRect[0] = westwardWall[0] - playerRect[2];
@@ -294,7 +294,7 @@ function collideWithHitData(player) {
   });
 
   state.hitData.eastwardWalls.forEach(eastwardWall => {
-    if (rectsCollide(playerRect, eastwardWall, info) && info.xCollide) {
+    if (rectsCollide(playerRect, eastwardWall, info) && info.xCollide && info.yCollide) {
       hitEastwardWall = true;
       console.log('EASTWARD WALL COLLIDE', playerRect, eastwardWall);
       // TODO: dispatch action
